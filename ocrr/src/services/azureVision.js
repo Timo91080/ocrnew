@@ -1,77 +1,62 @@
-﻿const { Readable } = require('stream');
-const { ComputerVisionClient } = require('@azure/cognitiveservices-computervision');
-const { ApiKeyCredentials } = require('@azure/ms-rest-js');
+﻿// src/services/vision.js
+const fs = require('fs');
 
-let cachedClient = null;
+const PROVIDER = (process.env.OCR_PROVIDER || 'google').toLowerCase();
 
-function getAzureClient() {
-  if (cachedClient) {
-    return cachedClient;
+async function ocrGoogle(imagePath) {
+  try {
+    const { ImageAnnotatorClient } = require('@google-cloud/vision');
+    const client = new ImageAnnotatorClient();
+    const [result] = await client.documentTextDetection(imagePath);
+    const fullText =
+      result?.fullTextAnnotation?.text ||
+      result?.textAnnotations?.[0]?.description ||
+      '';
+    return { fullText, ok: !!fullText, who: 'google', raw: result };
+  } catch (e) {
+    return { fullText: '', ok: false, who: 'google', error: e };
   }
-
-  const endpoint = process.env.AZURE_VISION_ENDPOINT;
-  const key = process.env.AZURE_VISION_KEY;
-
-  if (!endpoint || !key) {
-    throw new Error('AZURE_VISION_ENDPOINT et AZURE_VISION_KEY doivent etre definis pour utiliser Azure Vision.');
-  }
-
-  cachedClient = new ComputerVisionClient(
-    new ApiKeyCredentials({ inHeader: { 'Ocp-Apim-Subscription-Key': key } }),
-    endpoint
-  );
-
-  return cachedClient;
 }
 
-function createStream(buffer) {
-  const stream = new Readable({ read() {} });
-  stream.push(buffer);
-  stream.push(null);
-  return stream;
+async function ocrAzure(imagePath) {
+  try {
+    const { AzureKeyCredential } = require('@azure/core-auth');
+    const { DocumentAnalysisClient } = require('@azure/ai-form-recognizer');
+    const endpoint = process.env.AZURE_VISION_ENDPOINT;
+    const key = process.env.AZURE_VISION_KEY;
+    const client = new DocumentAnalysisClient(endpoint, new AzureKeyCredential(key));
+    const img = fs.readFileSync(imagePath);
+    const poller = await client.beginAnalyzeDocument('prebuilt-read', img);
+    const { content } = await poller.pollUntilDone();
+    const fullText = content || '';
+    return { fullText, ok: !!fullText, who: 'azure', raw: content };
+  } catch (e) {
+    return { fullText: '', ok: false, who: 'azure', error: e };
+  }
 }
 
-async function extractTextFromImage(buffer) {
-  if (!buffer || !Buffer.isBuffer(buffer)) {
-    throw new Error('Aucun contenu image a analyser.');
+/**
+ * OCR avec secours automatique:
+ * - Essaie d'abord le provider choisi (OCR_PROVIDER).
+ * - Si texte < 80 caractères, retente avec l'autre provider.
+ * - Retourne le texte le plus long.
+ */
+async function performOCR(imagePath) {
+  if (!fs.existsSync(imagePath)) throw new Error(`Image not found: ${imagePath}`);
+
+  const run1 = PROVIDER === 'azure' ? await ocrAzure(imagePath) : await ocrGoogle(imagePath);
+  let best = run1;
+
+  // seuil simple pour considérer l'OCR "pauvre"
+  const tooShort = (t) => (t ? t.length : 0) < 80;
+
+  if (tooShort(run1.fullText)) {
+    const run2 = PROVIDER === 'azure' ? await ocrGoogle(imagePath) : await ocrAzure(imagePath);
+    if ((run2.fullText || '').length > (best.fullText || '').length) best = run2;
   }
 
-  const client = getAzureClient();
-  const readOperation = await client.readInStream(() => createStream(buffer));
-
-  if (!readOperation || !readOperation.operationLocation) {
-    throw new Error('Azure Vision: operationLocation introuvable.');
-  }
-
-  const operationId = readOperation.operationLocation.split('/').pop();
-  let readResult;
-  let attempts = 0;
-
-  do {
-    attempts += 1;
-    readResult = await client.getReadResult(operationId);
-    if (readResult.status === 'succeeded' || readResult.status === 'failed') {
-      break;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  } while (attempts < 30);
-
-  if (!readResult || readResult.status !== 'succeeded') {
-    throw new Error(`Azure Vision OCR failed: ${readResult?.status || 'inconnu'}`);
-  }
-
-  const text = readResult.analyzeResult.readResults
-    .map((page) => page.lines.map((line) => line.text).join('\n'))
-    .join('\n')
-    .trim();
-
-  if (!text) {
-    throw new Error('Azure Vision n\'a retourne aucun texte.');
-  }
-
-  return text;
+  console.log('[OCR]', { providerChosen: PROVIDER, used: best.who, len: (best.fullText || '').length });
+  return { fullText: best.fullText || '', raw: best.raw, providerUsed: best.who };
 }
 
-module.exports = {
-  extractTextFromImage,
-};
+module.exports = { performOCR };

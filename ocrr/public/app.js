@@ -16,13 +16,25 @@ let lastOcrText = '';
 let sheetsEnabled = false;
 let validationInfo = null;
 
+async function parseJsonSafe(res) {
+  const text = await res.text();
+  try {
+    return { data: JSON.parse(text), raw: text };
+  } catch {
+    return { data: null, raw: text };
+  }
+}
+
 async function fetchConfig() {
   try {
     const response = await fetch('/api/orders/config');
-    if (!response.ok) {
-      throw new Error('Impossible de recuperer la configuration.');
+    const { data, raw } = await parseJsonSafe(response);
+    if (!response.ok || !data) {
+      throw new Error(
+        data?.error ||
+        `Impossible de recuperer la configuration. (${response.status}) ${raw.slice(0, 200)}`
+      );
     }
-    const data = await response.json();
     sheetsEnabled = Boolean(data.googleSheetsEnabled);
     validationInfo = data;
     if (data.googleSheetId) {
@@ -35,6 +47,7 @@ async function fetchConfig() {
     }
   } catch (error) {
     console.warn(error);
+    setStatus(error.message, true);
   }
 }
 
@@ -54,13 +67,9 @@ function renderHistory(history) {
     const parts = [`Tentative ${entry.attempt}`, `Erreur: ${entry.error}`];
     if (entry.agentApplied) {
       parts.push('Agent IA applique');
-      if (entry.agentNotes) {
-        parts.push(`Notes agent: ${entry.agentNotes}`);
-      }
+      if (entry.agentNotes) parts.push(`Notes agent: ${entry.agentNotes}`);
     }
-    if (entry.agentError) {
-      parts.push(`Agent erreur: ${entry.agentError}`);
-    }
+    if (entry.agentError) parts.push(`Agent erreur: ${entry.agentError}`);
     return parts.join('\n');
   });
 
@@ -92,11 +101,9 @@ function renderTable(items) {
   const tbody = document.createElement('tbody');
   let needsReviewCount = 0;
 
-    items.forEach((item) => {
+  items.forEach((item) => {
     const row = document.createElement('tr');
-    if (item.__extracted_original) {
-      row.classList.add('extracted-original');
-    }
+    if (item.__extracted_original) row.classList.add('extracted-original');
     if (item.needs_review) {
       row.classList.add('needs-review');
       needsReviewCount += 1;
@@ -109,7 +116,6 @@ function renderTable(items) {
       item.quantity_raw ?? '',
       item.unit_price_raw ?? '',
     ];
-
     cells.forEach((value) => {
       const td = document.createElement('td');
       td.textContent = value;
@@ -123,7 +129,9 @@ function renderTable(items) {
   tableContainer.appendChild(table);
 
   if (needsReviewCount > 0) {
-    reviewNoteEl.textContent = `${needsReviewCount} ligne(s) necessitent une validation manuelle. Les valeurs catalogue n'ont pas pu etre confirmees.`;
+    reviewNoteEl.textContent =
+      `${needsReviewCount} ligne(s) necessitent une validation manuelle. ` +
+      `Les valeurs catalogue n'ont pas pu etre confirmees.`;
     reviewNoteEl.classList.remove('hidden');
   } else {
     reviewNoteEl.classList.add('hidden');
@@ -149,14 +157,13 @@ form.addEventListener('submit', async (event) => {
     const formData = new FormData();
     formData.append('file', fileInput.files[0]);
 
-    const response = await fetch('/api/orders/process', {
-      method: 'POST',
-      body: formData,
-    });
+    const response = await fetch('/api/orders/process', { method: 'POST', body: formData });
+    const { data: payload, raw } = await parseJsonSafe(response);
 
-    const payload = await response.json();
-    if (!response.ok) {
-      throw new Error(payload.error || 'Erreur inconnue cote serveur.');
+    if (!response.ok || !payload) {
+      throw new Error(
+        payload?.error || `Erreur serveur (${response.status}). ${raw.slice(0, 300)}`
+      );
     }
 
     extractedItems = payload.items || [];
@@ -200,10 +207,7 @@ form.addEventListener('submit', async (event) => {
 });
 
 sendSheetsBtn.addEventListener('click', async () => {
-  if (!sheetsEnabled) {
-    return;
-  }
-
+  if (!sheetsEnabled) return;
   if (!extractedItems || extractedItems.length === 0) {
     setStatus('Aucune donnee a envoyer.', true);
     return;
@@ -215,16 +219,14 @@ sendSheetsBtn.addEventListener('click', async () => {
 
     const response = await fetch('/api/orders/send-to-sheets', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ items: extractedItems, ocrText: lastOcrText }),
     });
 
-    const payload = await response.json();
-    if (!response.ok) {
-      renderHistory(payload.history || []);
-      throw new Error(payload.error || 'Erreur lors de l\'envoi vers Google Sheets.');
+    const { data: payload, raw } = await parseJsonSafe(response);
+    if (!response.ok || !payload) {
+      renderHistory(payload?.history || []);
+      throw new Error(payload?.error || `Erreur Sheets (${response.status}). ${raw.slice(0, 300)}`);
     }
 
     extractedItems = payload.items || extractedItems;

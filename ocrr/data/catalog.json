@@ -1,6 +1,6 @@
 [
   {"reference":"4435091","model":"Pull Paquira","color":"Violet","size":"38/40","price":"34.99"},
-  {"reference":"444342","model":"Soutien Vertigo","color":"Bleu","size":"95BC","price":"38.99"},
+  {"reference":"4444342","model":"Soutien Vertigo","color":"Bleu","size":"95BC","price":"38.99"},
   {"reference":"3139681","model":"Correcteur anti-taches","color":"","size":"code10","price":"16.99"},
   {"reference":"3136281","model":"Crème  régénérante","color":"","size":"code10","price":"29.99"},
   {"reference":"3145431","model":"Chausson","color":"Rose","size":"41","price":"27.99"},
@@ -17,11 +17,10 @@
   {"reference":"4440832","model":"Peignoir Septuor","color":"Prune","size":"46/48","price":"47.99"},
   {"reference":"33365A1","model":"Paulie Pull","color":"Fushia","size":"50/52","price":"24.99"},
   {"reference":"3305051","model":"Ballerines","color":"Bordeaux","size":"38","price":"29.99"},
-  {"reference":"337691","model":"Beaume Chinois","color":"Noir","size":"40","price":"14.99"},
+  {"reference":"3377691","model":"Beaume Chinois","color":"Noir","size":"40","price":"14.99"},
   {"reference":"2818341","model":"Concave T-Shirt","color":"Blanc","size":"54/56","price":"39.99"},
   {"reference":"2847082","model":"Cogolin","color":"Rose","size":"56","price":"45.99"},
   {"reference":"2860531","model":"Calera T-Shirt","color":"Blanc","size":"54/56","price":"32.99"},
-  {"reference":"4441174","model":"Trouville","color":"Sable","size":"50","price":"85.99"},
-  {"reference":"33365B1","model":"Paulie Pull","color":"Rose","size":"64","price":"27.99"},
-  {"reference":"3145432","model":"Chausson","color":"Rose","size":"64","price":"27.99"}
+  {"reference":"4441174","model":"Trouville","color":"Sable","size":"50","price":"85.99"}
+
 ]
