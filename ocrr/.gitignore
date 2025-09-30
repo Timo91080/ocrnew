@@ -1,5 +1,7 @@
 # This is a sample .gitignore file
 # Add files and directories to ignore
 node_modules/
-secrets/\r\n.env\r\n
-node_modules/\r\n
+secrets/
+.env
+.env.example
+secrets/vision-credentials.json
