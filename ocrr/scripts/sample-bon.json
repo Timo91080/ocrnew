@@ -1,0 +1,23 @@
+[
+  {
+    "demandes": [
+      {
+        "type": "Demande de Remise de Chèque",
+        "order_id": "1253029",
+        "customer": { "name": "Madame TISSERAND", "client_number": "230427197" },
+        "items": [
+          { "Codif cat": "4435091", "Taille": "38/40", "Modèle": "Pull Paquira", "coloris": "Violet", "PV": 34.99 },
+          { "Codif cat": "444342", "Taille": "95BC", "Modèle": "Soutien Vertigo", "coloris": "Bleu", "PV": 38.99 }
+        ]
+      },
+      {
+        "type": "Demande de Déblocage de Fonds",
+        "order_id": "W25F6_BDCP",
+        "customer": { "name": "Madame DEBEUGNY", "client_number": "170612029" },
+        "items": [
+          { "Codif cat": "3145431", "Taille": "41", "Modèle": "chausson", "coloris": "Rose", "PV": 27.99 }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,55 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Extraction Commandes Afibel</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Extraction et Export de Bons de Commande</h1>
+      <p>Televersez un bon de commande scanne (image/PDF) ou un JSON pour obtenir une extraction structuree.</p>
+    </header>
+
+    <section class="uploader">
+      <form id="upload-form">
+        <label for="file-input" class="file-label">
+          <span>Choisir un fichier</span>
+          <input id="file-input" type="file" name="file" accept="image/*,.pdf,.json" required />
+        </label>
+        <button type="submit">Analyser le document</button>
+      </form>
+      <p id="status" class="status"></p>
+    </section>
+
+    <section id="results" class="hidden">
+      <div class="actions">
+        <button id="send-sheets" disabled>Envoyer vers Google Sheets</button>
+        <a id="sheet-link" target="_blank" rel="noopener" class="hidden">Ouvrir Google Sheets</a>
+      </div>
+
+      <h2>Lignes detectees</h2>
+      <div id="table-container" class="table-container"></div>
+      <div id="review-note" class="needs-review-badge hidden"></div>
+
+      <details id="history-details" class="hidden">
+        <summary>Historique des tentatives</summary>
+        <pre id="history-log"></pre>
+      </details>
+
+      <details>
+        <summary>Voir le texte OCR brut</summary>
+        <pre id="ocr-text"></pre>
+      </details>
+
+      <details>
+        <summary>Reponse JSON du LLM</summary>
+        <pre id="llm-json"></pre>
+      </details>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
