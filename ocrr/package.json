@@ -1,22 +1,23 @@
-﻿{
+{
   "name": "ocrr",
   "version": "1.0.0",
-  "description": "Extraction de bons Afibel via Google Vision, Groq et export Google Sheets",
+  "description": "Extraction de bons de commande (Azure / Google Vision, Groq, Google Sheets)",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "echo \"No tests configured\"",
-    "pipeline:test": "node scripts/pipeline-test.js"
+    "pipeline:test": "node scripts/pipeline-test.js",
+    "check:poppler": "node scripts/check-poppler.js"
   },
   "keywords": [
     "ocr",
-    "groq",
+    "azure-vision",
     "google-vision",
+    "groq",
     "google-sheets",
     "afibel"
   ],
-  "author": "",
   "license": "ISC",
   "dependencies": {
     "@azure/cognitiveservices-computervision": "^8.2.0",
@@ -28,7 +29,9 @@
     "fast-levenshtein": "^3.0.0",
     "googleapis": "^160.0.0",
     "multer": "^2.0.2",
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^2.7.0",
+    "pdf-parse": "^1.1.1",
+    "sharp": "^0.33.4"
   },
   "devDependencies": {
     "nodemon": "^3.1.7"

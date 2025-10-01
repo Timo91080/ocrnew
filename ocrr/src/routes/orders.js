@@ -49,6 +49,17 @@ router.post('/process', upload.single('file'), async (req, res, next) => {
     const filePath = req.file?.path || req.body?.filePath;
     if (!filePath) return res.status(400).json({ error: 'file manquant' });
 
+    // Vérifie l'extension si un fichier est uploadé (autorise images + pdf)
+    if (req.file) {
+      const original = (req.file.originalname || '').toLowerCase();
+      const allowed = ['.pdf', '.jpg', '.jpeg', '.png', '.webp'];
+      const ext = require('path').extname(original);
+      if (!allowed.includes(ext)) {
+        fs.unlink(req.file.path, () => {});
+        return res.status(400).json({ error: 'Extension non supportée. Utilisez PDF ou image (jpg/png/webp).' });
+      }
+    }
+
     const { fullText } = await performOCR(filePath);
     const llmItems = await extractWithLLM({ imagePath: filePath, ocrText: fullText });
     const finalItems = postProcessItems(llmItems || [], { ocrText: fullText });

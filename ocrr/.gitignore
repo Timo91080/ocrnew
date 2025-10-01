@@ -1,7 +1,22 @@
-# This is a sample .gitignore file
-# Add files and directories to ignore
+# Dépendances
 node_modules/
-secrets/
+
+# Secrets / env
 .env
-.env.example
-secrets/vision-credentials.json
+.env.*
+secrets/
+*.key
+*.pem
+
+# Poppler (binaire local)
+public/vendor/
+vendor/poppler/
+
+# Fichiers générés
+uploads/
+*.log
+*.tmp
+
+# OS / IDE
+.DS_Store
+Thumbs.db
